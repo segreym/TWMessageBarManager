@@ -82,6 +82,7 @@ static UIColor *kTWDefaultMessageBarStyleSheetInfoStrokeColor = nil;
 - (UIFont *)descriptionFont;
 - (UIColor *)titleColor;
 - (UIColor *)descriptionColor;
+- (NSTextAlignment)textAlignment;
 
 // Helpers
 - (CGRect)orientFrame:(CGRect)frame;
@@ -97,11 +98,6 @@ static UIColor *kTWDefaultMessageBarStyleSheetInfoStrokeColor = nil;
 
 @end
 
-@interface TWDefaultMessageBarStyleSheet : NSObject <TWMessageBarStyleSheet>
-
-+ (TWDefaultMessageBarStyleSheet *)styleSheet;
-
-@end
 
 @interface TWMessageWindow : UIWindow
 
@@ -558,10 +554,10 @@ static UIColor *kTWDefaultMessageBarStyleSheetInfoStrokeColor = nil;
         if ([[UIDevice currentDevice] tw_isRunningiOS7OrLater])
         {
             NSMutableParagraphStyle *paragraphStyle = [[NSParagraphStyle defaultParagraphStyle] mutableCopy];
-            paragraphStyle.alignment = NSTextAlignmentLeft;
+            paragraphStyle.alignment = [self textAlignment];
             
             [[self titleColor] set];
-            [self.titleString drawWithRect:CGRectMake(xOffset, yOffset, titleLabelSize.width, titleLabelSize.height)
+            [self.titleString drawWithRect:CGRectMake(xOffset, yOffset, [self availableWidth], titleLabelSize.height)
                                    options:NSStringDrawingUsesLineFragmentOrigin | NSStringDrawingTruncatesLastVisibleLine
                                 attributes:@{NSFontAttributeName:[self titleFont], NSForegroundColorAttributeName:[self titleColor], NSParagraphStyleAttributeName:paragraphStyle}
                                    context:nil];
@@ -569,7 +565,7 @@ static UIColor *kTWDefaultMessageBarStyleSheetInfoStrokeColor = nil;
             yOffset += titleLabelSize.height;
             
             [[self descriptionColor] set];
-            [self.descriptionString drawWithRect:CGRectMake(xOffset, yOffset, descriptionLabelSize.width, descriptionLabelSize.height)
+            [self.descriptionString drawWithRect:CGRectMake(xOffset, yOffset, [self availableWidth], descriptionLabelSize.height)
                                          options:NSStringDrawingUsesLineFragmentOrigin | NSStringDrawingTruncatesLastVisibleLine
                                       attributes:@{NSFontAttributeName:[self descriptionFont], NSForegroundColorAttributeName:[self descriptionColor], NSParagraphStyleAttributeName:paragraphStyle}
                                          context:nil];
@@ -579,7 +575,7 @@ static UIColor *kTWDefaultMessageBarStyleSheetInfoStrokeColor = nil;
             [[self titleColor] set];
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wdeprecated-declarations"
-            [self.titleString drawInRect:CGRectMake(xOffset, yOffset, titleLabelSize.width, titleLabelSize.height) withFont:[self titleFont] lineBreakMode:NSLineBreakByTruncatingTail alignment:NSTextAlignmentLeft];
+            [self.titleString drawInRect:CGRectMake(xOffset, yOffset, [self availableWidth], titleLabelSize.height) withFont:[self titleFont] lineBreakMode:NSLineBreakByTruncatingTail alignment:[self textAlignment]];
 #pragma clang diagnostic pop
             
             yOffset += titleLabelSize.height;
@@ -587,7 +583,7 @@ static UIColor *kTWDefaultMessageBarStyleSheetInfoStrokeColor = nil;
             [[self descriptionColor] set];
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wdeprecated-declarations"
-            [self.descriptionString drawInRect:CGRectMake(xOffset, yOffset, descriptionLabelSize.width, descriptionLabelSize.height) withFont:[self descriptionFont] lineBreakMode:NSLineBreakByTruncatingTail alignment:NSTextAlignmentLeft];
+            [self.descriptionString drawInRect:CGRectMake(xOffset, yOffset, [self availableWidth], descriptionLabelSize.height) withFont:[self descriptionFont] lineBreakMode:NSLineBreakByTruncatingTail alignment:[self textAlignment]];
 #pragma clang diagnostic pop
         }
     }
@@ -722,6 +718,19 @@ static UIColor *kTWDefaultMessageBarStyleSheetInfoStrokeColor = nil;
         }
     }
     return kTWMessageViewDescriptionColor;
+}
+
+- (NSTextAlignment)textAlignment
+{
+    if ([self.delegate respondsToSelector:@selector(styleSheetForMessageView:)])
+    {
+        id<TWMessageBarStyleSheet> styleSheet = [self.delegate styleSheetForMessageView:self];
+        if ([styleSheet respondsToSelector:@selector(textAlignment)])
+        {
+            return [styleSheet textAlignment];
+        }
+    }
+    return NSTextAlignmentLeft;
 }
 
 #pragma mark - Helpers
